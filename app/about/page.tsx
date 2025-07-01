@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
@@ -15,8 +16,42 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
+import { useAbout } from '@/lib/tanstack/queries';
 
 export default function AboutPage() {
+  // Fetch about data using TanStack Query
+  const { data: aboutData, isLoading, isError } = useAbout();
+  
+  // Use effect to log data when it's fetched
+  useEffect(() => {
+    if (aboutData?.data) {
+      console.log('About data from API:', aboutData.data);
+    }
+  }, [aboutData]);
+  
+  // Show loading state
+  if (isLoading) {
+    return (
+      <main className='min-h-screen py-20 px-4 bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-950 dark:to-blue-950'>
+        <div className='container mx-auto max-w-5xl text-center'>
+          <p className='text-muted-foreground'>Loading about information...</p>
+        </div>
+      </main>
+    );
+  }
+
+  // Show error state
+  if (isError) {
+    return (
+      <main className='min-h-screen py-20 px-4 bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-950 dark:to-blue-950'>
+        <div className='container mx-auto max-w-5xl text-center'>
+          <p className='text-muted-foreground mb-4'>Error loading about information. Please try again later.</p>
+          <Button onClick={() => window.location.reload()}>Retry</Button>
+        </div>
+      </main>
+    );
+  }
+  
   return (
     <main className='min-h-screen py-20 px-4 bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-950 dark:to-blue-950'>
       <div className='container mx-auto max-w-5xl'>

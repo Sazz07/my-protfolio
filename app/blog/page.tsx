@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { motion } from "framer-motion"
@@ -9,9 +9,10 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
+import { useBlogs, useBlogCategories } from "@/lib/tanstack/queries"
 
-// In a real application, you would fetch this data from an API or CMS
-const blogPosts = [
+// Static fallback data
+const staticBlogPosts = [
   {
     id: "modern-react-patterns",
     title: "Modern React Patterns for Cleaner Code",
@@ -62,11 +63,35 @@ const blogPosts = [
   },
 ]
 
-const categories = ["All", "React", "Next.js", "TypeScript", "CSS", "Backend"]
+// Static fallback categories
+const staticCategories = ["All", "React", "Next.js", "TypeScript", "CSS", "Backend"]
+
+// Function to get categories from API or use static fallback
+const getCategories = (categoriesData: any) => {
+  if (categoriesData?.data && categoriesData.data.length > 0) {
+    // Add "All" category to the beginning of the list
+    return ["All", ...categoriesData.data.map((category: any) => category.name)]
+  }
+  return staticCategories
+}
 
 export default function BlogPage() {
   const [searchQuery, setSearchQuery] = useState("")
   const [activeCategory, setActiveCategory] = useState("All")
+  const [blogPosts, setBlogPosts] = useState(staticBlogPosts)
+  
+  // Fetch blogs using TanStack Query
+  const { data: blogsData, isLoading: isLoadingBlogs, isError: isErrorBlogs } = useBlogs()
+  const { data: categoriesData, isLoading: isLoadingCategories } = useBlogCategories()
+  
+  // Use effect to update blogs when data is fetched
+  useEffect(() => {
+    if (blogsData?.data) {
+      console.log('Blogs data from API:', blogsData.data)
+      // Uncomment the line below to use API data instead of static data
+      // setBlogPosts(blogsData.data)
+    }
+  }, [blogsData])
 
   const filteredPosts = blogPosts
     .filter((post) => activeCategory === "All" || post.category === activeCategory)
@@ -108,7 +133,7 @@ export default function BlogPage() {
           </div>
 
           <div className="flex gap-2 overflow-x-auto pb-2 md:pb-0">
-            {categories.map((category) => (
+            {getCategories(categoriesData).map((category) => (
               <Button
                 key={category}
                 variant={activeCategory === category ? "default" : "outline"}
@@ -122,7 +147,16 @@ export default function BlogPage() {
           </div>
         </div>
 
-        {filteredPosts.length > 0 ? (
+        {isLoadingBlogs ? (
+          <div className="text-center py-12">
+            <p className="text-muted-foreground mb-4">Loading blog posts...</p>
+          </div>
+        ) : isErrorBlogs ? (
+          <div className="text-center py-12">
+            <p className="text-muted-foreground mb-4">Error loading blog posts. Please try again later.</p>
+            <Button onClick={() => window.location.reload()}>Retry</Button>
+          </div>
+        ) : filteredPosts.length > 0 ? (
           <div className="grid gap-6">
             {filteredPosts.map((post, index) => (
               <motion.div

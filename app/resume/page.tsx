@@ -1,6 +1,7 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { useSkills, useExperiences } from "@/lib/tanstack/queries"
 import Link from "next/link"
 import { motion } from "framer-motion"
 import { ArrowLeft, Download, FileText } from "lucide-react"
@@ -10,7 +11,44 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 export default function ResumePage() {
   const [activeTab, setActiveTab] = useState("experience")
+  
+  // Fetch skills and experiences using TanStack Query
+  const { data: skillsData, isLoading: isLoadingSkills, isError: isErrorSkills } = useSkills()
+  const { data: experiencesData, isLoading: isLoadingExperiences, isError: isErrorExperiences } = useExperiences()
+  
+  // Use effect to log data when it's fetched
+  useEffect(() => {
+    if (skillsData?.data) {
+      console.log('Skills data from API:', skillsData.data)
+    }
+    if (experiencesData?.data) {
+      console.log('Experiences data from API:', experiencesData.data)
+    }
+  }, [skillsData, experiencesData])
 
+  // Show loading state if any data is loading
+  if (isLoadingSkills || isLoadingExperiences) {
+    return (
+      <main className="min-h-screen py-20 px-4 bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-950 dark:to-blue-950">
+        <div className="container mx-auto max-w-5xl text-center">
+          <p className="text-muted-foreground">Loading resume information...</p>
+        </div>
+      </main>
+    );
+  }
+
+  // Show error state if any data failed to load
+  if (isErrorSkills || isErrorExperiences) {
+    return (
+      <main className="min-h-screen py-20 px-4 bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-950 dark:to-blue-950">
+        <div className="container mx-auto max-w-5xl text-center">
+          <p className="text-muted-foreground mb-4">Error loading resume information. Please try again later.</p>
+          <Button onClick={() => window.location.reload()}>Retry</Button>
+        </div>
+      </main>
+    );
+  }
+  
   return (
     <main className="min-h-screen py-20 px-4 bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-950 dark:to-blue-950">
       <div className="container mx-auto max-w-5xl">

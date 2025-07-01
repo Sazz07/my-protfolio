@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
 import { useToast } from "@/hooks/use-toast"
+import { useMutation } from "@/lib/tanstack/hooks"
 
 export default function ContactPage() {
   const { toast } = useToast()
@@ -20,32 +21,45 @@ export default function ContactPage() {
     subject: "",
     message: "",
   })
-  const [isSubmitting, setIsSubmitting] = useState(false)
+  
+  // Use TanStack Query's useMutation hook for form submission
+  const { mutate, isPending: isSubmitting } = useMutation({
+    mutationFn: async (data: typeof formData) => {
+      // In a real application, this would be an API call
+      // For now, we'll simulate a delay
+      await new Promise((resolve) => setTimeout(resolve, 1500))
+      return { success: true }
+    },
+    onSuccess: () => {
+      toast({
+        title: "Message sent!",
+        description: "Thank you for your message. I'll get back to you soon.",
+      })
+      
+      setFormData({
+        name: "",
+        email: "",
+        subject: "",
+        message: "",
+      })
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to send message. Please try again later.",
+        variant: "destructive",
+      })
+    }
+  })
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
     setFormData((prev) => ({ ...prev, [name]: value }))
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    setIsSubmitting(true)
-
-    // Simulate form submission
-    await new Promise((resolve) => setTimeout(resolve, 1500))
-
-    toast({
-      title: "Message sent!",
-      description: "Thank you for your message. I'll get back to you soon.",
-    })
-
-    setFormData({
-      name: "",
-      email: "",
-      subject: "",
-      message: "",
-    })
-    setIsSubmitting(false)
+    mutate(formData)
   }
 
   return (
